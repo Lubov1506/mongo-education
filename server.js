@@ -48,17 +48,22 @@ const User = mongoose.model('User', usersSchema);
 
 const postSchema = new Schema({
   body: {
-    type: String,
-    required:true
+      type: String,
+      required: true
   },
   imgSrc: String,
-  author:{
-    type: Schema.Types.ObjectId,
-    ref:'users'
+  author:{ 
+      type: Schema.Types.ObjectId, 
+      ref: 'User' 
   }
-})
+});
 
 const Post = mongoose.model('Post', postSchema)
+
+
+
+
+
 app.use(express.json());
 
 app.post('/', async (req, res, next) => {
@@ -99,6 +104,39 @@ app.delete('/:userId', async (req, res, next) => {
     next(err);
   }
 });
+
+//crud for posts
+app.post('/:userId/posts', async (req, res, next) => {
+  try {
+    const { body, params:{userId} } = req;
+    const createdPost = await Post.create({...body, author: userId});
+    res.send(createdPost);
+  } catch (err) {
+    next(err);
+  }
+});
+app.get('/posts', async (req, res, next) => {
+    Post
+    .find()
+    .populate('author')
+    .exec(
+        (err, posts) => {
+            if (err) {
+                throw err
+            }
+            res.send(posts)
+        })
+});
+app.get('/:userId/posts', async (req, res, next) => {
+  try{
+  const {params: {userId}} = req
+  const userPosts = await Post.find({author:userId})
+    res.send(userPosts)
+  }catch(err){
+    next(err)
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 
